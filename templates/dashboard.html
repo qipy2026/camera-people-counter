@@ -203,10 +203,11 @@ async function loadChart() {
     const r = await fetch(API + `/counts/timeseries?camera_id=1&from=${from}&to=${to}&bucket=raw`);
     const d = await r.json();
 
-    chartRawData = d.data;  // keep full records
+    // Only show points that have associated snapshot images
+    chartRawData = d.data.filter(p => p.snapshot_path);
 
     // Map to scatter points with snapshot_path as custom data
-    const points = d.data.map(p => ({
+    const points = chartRawData.map(p => ({
       x: new Date(p.timestamp).getTime(),
       y: p.person_count,
       snap: p.snapshot_path  // stored in point for click handler
