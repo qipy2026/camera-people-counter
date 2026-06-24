@@ -14,7 +14,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from apscheduler.schedulers.background import BackgroundScheduler
 from cachetools import TTLCache
 
@@ -169,6 +169,14 @@ def _record_failure(now):
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
+
+
+@app.route("/snapshots/<filename>")
+def serve_snapshot(filename):
+    """Serve snapshot images from output directory."""
+    import os
+    full_path = os.path.join(os.path.abspath(config.output_dir), filename)
+    return send_file(full_path)
 
 
 # ---- scheduler (CronTrigger, 按时间点) ----

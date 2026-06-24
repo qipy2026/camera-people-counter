@@ -56,6 +56,19 @@
     border-radius: 4px; font-size: 0.8rem; }
   .add-row button { padding: 6px 14px; background: var(--accent); color: #fff;
     border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
+
+  /* modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #fff; border-radius: 10px; max-width: 90vw; max-height: 90vh;
+    overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal img { display: block; max-width: 100%; max-height: 70vh; }
+  .modal .info { padding: 14px 20px; display: flex; justify-content: space-between;
+    align-items: center; font-size: 0.9rem; }
+  .modal .info .count { font-size: 1.4rem; font-weight: 700; }
+  .modal .close { position: absolute; top: 16px; right: 24px; font-size: 1.8rem;
+    color: #fff; cursor: pointer; z-index: 1001; line-height: 1; }
 </style>
 </head>
 <body>
@@ -128,6 +141,18 @@
   </div>
 </div>
 
+<!-- Modal -->
+<div class="modal-overlay" id="snap-modal" onclick="closeModal(event)">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <div class="modal" onclick="event.stopPropagation()">
+    <img id="snap-img" src="" alt="快照预览">
+    <div class="info">
+      <span id="snap-ts"></span>
+      <span class="count" id="snap-count"></span>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = '/api';
 let chart7d = null;
@@ -168,6 +193,8 @@ async function loadLatest() {
 }
 
 // ---- scatter chart (7 days, raw data points) ----
+let chartRawData = [];  // store raw data for click handler
+
 async function loadChart() {
   try {
     const to = new Date().toISOString();
@@ -175,11 +202,13 @@ async function loadChart() {
     const r = await fetch(API + `/counts/timeseries?camera_id=1&from=${from}&to=${to}&bucket=raw`);
     const d = await r.json();
 
-    // Each data point: {timestamp, person_count}
-    // Map to scatter: x=timestamp, y=person_count
+    chartRawData = d.data;  // keep full records
+
+    // Map to scatter points with snapshot_path as custom data
     const points = d.data.map(p => ({
       x: new Date(p.timestamp).getTime(),
-      y: p.person_count
+      y: p.person_count,
+      snap: p.snapshot_path  // stored in point for click handler
     }));
 
     if (chart7d) chart7d.destroy();
@@ -192,10 +221,18 @@ async function loadChart() {
           backgroundColor: '#3b82f6',
           pointRadius: 6,
           pointHoverRadius: 8,
+          pointHitRadius: 12,
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        onClick: (e, elements, chart) => {
+          if (elements.length > 0) {
+            const idx = elements[0].index;
+            const pt = chart.data.datasets[0].data[idx];
+            openModal(pt.snap, pt.x, pt.y);
+          }
+        },
         scales: {
           x: {
             type: 'time',
@@ -283,6 +320,29 @@ async function deleteTime(id) {
   await fetch(API + '/schedule/' + id, { method: 'DELETE' });
   loadSchedule();
 }
+
+// ---- modal ----
+function openModal(snapshotPath, ts, count) {
+  if (!snapshotPath) {
+    alert('此数据点没有关联快照图片。');
+    return;
+  }
+  const filename = snapshotPath.replace(/\\/g, '/').split('/').pop();
+  document.getElementById('snap-img').src = '/snapshots/' + filename;
+  document.getElementById('snap-ts').textContent = new Date(ts).toLocaleString('zh-CN');
+  document.getElementById('snap-count').textContent = count + ' 人';
+  document.getElementById('snap-modal').classList.add('active');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('snap-modal')) return;
+  document.getElementById('snap-modal').classList.remove('active');
+}
+
+// ESC key close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('snap-modal').classList.remove('active');
+});
 
 // ---- init ----
 checkHealth();
