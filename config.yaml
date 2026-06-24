@@ -1,0 +1,14 @@
+# 百度千帆 AI Search 默认配置
+# 注意：Access Token 不在此文件中配置，请使用 BAIDU_ACCESS_TOKEN 环境变量或 --token 参数
+
+# API 地址
+api_url: "https://qianfan.baidubce.com/v2/ai_search/web_search"
+
+# 版本
+edition: "standard"
+
+# 搜索源
+search_source: "baidu_search_v2"
+
+# 请求超时（秒）
+timeout: 30

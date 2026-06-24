@@ -1,0 +1,7 @@
+torch>=2.0.0
+ultralytics>=8.3.0
+opencv-python
+numpy>=2
+flask>=3.0
+apscheduler>=3.10
+cachetools>=5.0
