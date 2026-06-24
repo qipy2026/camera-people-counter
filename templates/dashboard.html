@@ -185,10 +185,10 @@ async function loadLatest() {
   try {
     const r = await fetch(API + '/counts/latest?camera_id=1'); const d = await r.json();
     const el = document.getElementById('current-count');
-    if (d.count === null) {
+    if (d.person_count === null) {
       el.innerHTML = '<span style="font-size:1.2rem;color:var(--sub)">等待数据...</span>';
     } else {
-      el.innerHTML = `${d.count}<span class="time">${new Date(d.recorded_at).toLocaleString('zh-CN')}</span>`;
+      el.innerHTML = `${d.person_count}<span class="time">${new Date(d.recorded_at).toLocaleString('zh-CN')}</span>`;
     }
   } catch(e) {}
 }
